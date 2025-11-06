@@ -1,5 +1,5 @@
 services:
-  # 1. Web Service (Backend API)
+  # Backend API
   - type: web
     name: swarmforge-api
     env: python
@@ -17,12 +17,12 @@ services:
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
 
-  # 2. Static Site (Frontend Dashboard)
+  # Frontend Dashboard (Static Site)
   - type: web
     name: swarmforge-dashboard
     env: static
     buildCommand: "npm install && npm run build"
-    publishPath: "build"
+    staticPublishPath: "build"   # ✅ correct field
     autoDeploy: true
     envVars:
       - key: API_URL
@@ -30,7 +30,7 @@ services:
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
         sync: false
 
-  # 3. Background Worker
+  # Background Worker
   - type: worker
     name: swarmforge-worker
     env: python
@@ -45,7 +45,6 @@ services:
         sync: false
 
 databases:
-  # 4. PostgreSQL Database
   - name: swarmforge-db
     plan: free
     databaseName: swarmforge
