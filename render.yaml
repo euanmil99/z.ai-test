@@ -1,53 +1,70 @@
 services:
   - type: web
-    name: swarmforge-api
-    env: python
-    branch: main
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python app.py"
-    autoDeploy: true
+    name: swarmforge
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
         fromDatabase:
           name: swarmforge-db
           property: connectionString
-      - key: STRIPE_SECRET_KEY
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_REDIRECT_URI
         sync: false
       - key: STRIPE_PUBLISHABLE_KEY
         sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-
-  - type: web
-    name: swarmforge-dashboard
-    env: static
-    branch: main
-    buildCommand: "npm install && npm run build"
-    staticPublishPath: "build"
-    autoDeploy: true
-    envVars:
-      - key: API_URL
-        value: "https://swarmforge-api.onrender.com"
-      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-        sync: false
-
-  - type: worker
-    name: swarmforge-worker
-    env: python
-    branch: main
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python swarm.py"
-    autoDeploy: true
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: swarmforge-db
-          property: connectionString
       - key: STRIPE_SECRET_KEY
         sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: NEXTAUTH_URL
+        value: https://swarmforge.onrender.com
+      - key: NEXTAUTH_SECRET
+        generateValue: true
 
 databases:
   - name: swarmforge-db
-    plan: free
     databaseName: swarmforge
     user: swarmforge_user
+    plan: free
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+        continue-on-error: true
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+          wait-for-success: true
