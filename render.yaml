@@ -18,10 +18,9 @@ services:
         sync: false
 
   # 2. Static Site (Frontend Dashboard)
-  - type: static_site
+  - type: web
     name: swarmforge-dashboard
-    env: node
-    plan: free
+    env: static
     buildCommand: "npm install && npm run build"
     publishPath: "build"
     autoDeploy: true
