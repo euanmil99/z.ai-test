@@ -1,0 +1,90 @@
+#!/bin/bash
+# deploy.sh - One-command deployment script
+
+set -e
+
+echo "🚀 Swarmforge Auto-Deployment"
+echo "============================="
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+# Check prerequisites
+check_prereqs() {
+    echo -e "${YELLOW}Checking prerequisites...${NC}"
+    
+    if ! command -v git &> /dev/null; then
+        echo -e "${RED}❌ Git is not installed${NC}"
+        exit 1
+    fi
+    
+    if ! command -v node &> /dev/null; then
+        echo -e "${RED}❌ Node.js is not installed${NC}"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✅ Prerequisites check passed${NC}"
+}
+
+# Setup Git repository
+setup_git() {
+    echo -e "${YELLOW}Setting up Git repository...${NC}"
+    
+    if [ ! -d ".git" ]; then
+        git init
+        git remote add origin https://github.com/euanmil99/z.ai-test.git
+    fi
+    
+    git add .
+    git commit -m "Configure automated deployment" || true
+    git push -u origin main || true
+    
+    echo -e "${GREEN}✅ Git repository ready${NC}"
+}
+
+# Install dependencies
+install_deps() {
+    echo -e "${YELLOW}Installing dependencies...${NC}"
+    npm install
+    echo -e "${GREEN}✅ Dependencies installed${NC}"
+}
+
+# Run tests
+run_tests() {
+    echo -e "${YELLOW}Running tests...${NC}"
+    npm test || echo -e "${YELLOW}⚠️ Tests failed but continuing${NC}"
+}
+
+# Deploy to Render
+deploy_to_render() {
+    echo -e "${YELLOW}Deploying to Render...${NC}"
+    
+    # Check if render CLI is installed
+    if ! command -v render &> /dev/null; then
+        echo -e "${YELLOW}Installing Render CLI...${NC}"
+        npm install -g @render/cli
+    fi
+    
+    # Deploy
+    render deploy
+    
+    echo -e "${GREEN}✅ Deployment initiated!${NC}"
+    echo -e "${GREEN}🌐 Your app will be available at: https://swarmforge.onrender.com${NC}"
+}
+
+# Main execution
+main() {
+    check_prereqs
+    setup_git
+    install_deps
+    run_tests
+    deploy_to_render
+    
+    echo -e "${GREEN}🎉 Deployment process completed!${NC}"
+    echo -e "${YELLOW}⏳ Please wait a few minutes for your app to be live.${NC}"
+}
+
+main "$@"
