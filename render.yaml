@@ -4,25 +4,35 @@ services:
     name: swarmforge-api
     env: python
     plan: free
+    branch: main        # ✅ explicitly set branch
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python app.py"
     autoDeploy: true
     envVars:
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: swarmforge-db
+          property: connectionString
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_PUBLISHABLE_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_REDIRECT_URI
+        value: "https://swarmforge-api.onrender.com/auth/callback"
 
   # Frontend Dashboard (Static Site)
   - type: web
     name: swarmforge-dashboard
     env: static
+    branch: main        # ✅ explicitly set branch
     buildCommand: "npm install && npm run build"
-    staticPublishPath: "build"   # ✅ correct field
+    staticPublishPath: "build"
     autoDeploy: true
     envVars:
       - key: API_URL
@@ -35,12 +45,15 @@ services:
     name: swarmforge-worker
     env: python
     plan: free
+    branch: main        # ✅ explicitly set branch
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python swarm.py"
     autoDeploy: true
     envVars:
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: swarmforge-db
+          property: connectionString
       - key: STRIPE_SECRET_KEY
         sync: false
 
