@@ -1,0 +1,49 @@
+services:
+  # 1. Web Service (Backend API)
+  - type: web
+    name: swarmforge-api
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python app.py"
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: ZAI_API_KEY
+        sync: false
+
+  # 2. Static Site (Frontend Dashboard)
+  - type: static_site
+    name: swarmforge-dashboard
+    env: node
+    plan: free
+    buildCommand: "npm install && npm run build"
+    publishPath: "build"
+    autoDeploy: true
+    envVars:
+      - key: API_URL
+        value: "https://swarmforge-api.onrender.com"
+
+  # 3. Background Worker
+  - type: worker
+    name: swarmforge-worker
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python swarm.py"
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: ZAI_API_KEY
+        sync: false
+
+databases:
+  # 4. PostgreSQL Database
+  - name: swarmforge-db
+    plan: free
+    databaseName: swarmforge
+    user: swarmforge_user
