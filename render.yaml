@@ -12,7 +12,9 @@ services:
         sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
-      - key: ZAI_API_KEY
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
         sync: false
 
   # 2. Static Site (Frontend Dashboard)
@@ -26,6 +28,8 @@ services:
     envVars:
       - key: API_URL
         value: "https://swarmforge-api.onrender.com"
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
 
   # 3. Background Worker
   - type: worker
@@ -38,7 +42,7 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
-      - key: ZAI_API_KEY
+      - key: STRIPE_SECRET_KEY
         sync: false
 
 databases:
