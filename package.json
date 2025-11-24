@@ -1,0 +1,17 @@
+{
+  "name": "swarmforge-api",
+  "version": "1.0.0",
+  "description": "SwarmForge API - AI-powered swarm orchestration",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "build": "echo 'Build complete'",
+    "dev": "node index.js"
+  },
+  "keywords": ["swarmforge", "ai", "orchestration"],
+  "author": "euanmil99",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
