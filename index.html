@@ -1,1 +1,387 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>SwarmForge - Multi-Agent AI Platform</title><style>*{margin:0;padding:0;box-sizing:border-box}:root{--primary:#6366f1;--bg:#0f172a;--surface:#1e293b;--text:#f1f5f9;--text-sec:#94a3b8;--success:#10b981;--border:#334155}body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh}.sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column}.sidebar-header{padding:1.5rem;border-bottom:1px solid var(--border)}.sidebar-header h2{color:var(--primary);font-size:1.5rem}.nav-item{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;color:var(--text-sec);text-decoration:none;transition:all .2s;cursor:pointer}.nav-item:hover,.nav-item.active{background:#334155;color:var(--primary)}.main-content{flex:1;display:flex;flex-direction:column;overflow:hidden}.page{display:none;flex:1;padding:2rem;overflow-y:auto}.page.active{display:flex;flex-direction:column}.page-header h1{font-size:2rem;margin-bottom:.5rem}.page-header p{color:var(--text-sec);margin-bottom:2rem}.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:2rem}.stat-card{background:var(--surface);padding:1.5rem;border-radius:12px;border:1px solid var(--border)}.stat-card h3{font-size:2rem;color:var(--primary);margin-bottom:.5rem}.chat-container{flex:1;display:flex;flex-direction:column;background:var(--surface);border-radius:12px;overflow:hidden}.chat-messages{flex:1;padding:2rem;overflow-y:auto}.message{margin-bottom:1.5rem;padding:1rem;border-radius:8px;max-width:80%}.message.user{background:var(--primary);margin-left:auto}.message.assistant{background:#334155}.chat-input-container{padding:1.5rem;border-top:1px solid var(--border)}.chat-input-wrapper{display:flex;gap:1rem}#chatInput{flex:1;padding:1rem;background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:1rem;resize:none;font-family:inherit}.send-btn{padding:1rem 2rem;background:var(--primary);border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:1rem}.send-btn:hover{background:#4f46e5}.send-btn:disabled{opacity:.5;cursor:not-allowed}.agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.5rem}.agent-card{background:var(--surface);padding:1.5rem;border-radius:12px;border:1px solid var(--border)}.agent-card h3{color:var(--primary);margin-bottom:.5rem}.agent-status{display:inline-block;padding:.25rem .75rem;background:var(--success);border-radius:12px;font-size:.875rem;margin-top:.5rem}.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:.5rem;animation:pulse 2s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}.loading{text-align:center;padding:2rem;color:var(--text-sec)}</style></head><body><div class="sidebar"><div class="sidebar-header"><h2>🚀 SwarmForge</h2></div><nav><a class="nav-item active" data-page="dashboard">📊 Dashboard</a><a class="nav-item" data-page="chat">💬 Chat</a><a class="nav-item" data-page="agents">🤖 Agents</a><a class="nav-item" data-page="memory">🧠 Memory</a></nav><div style="padding:1rem 1.5rem;border-top:1px solid var(--border);margin-top:auto"><div style="display:flex;align-items:center;gap:.5rem;font-size:.875rem"><span class="status-dot" id="apiStatus"></span><span id="apiStatusText">Connecting...</span></div></div></div><div class="main-content"><div class="page active" id="dashboard"><div class="page-header"><h1>Dashboard</h1><p>Overview of your multi-agent swarm</p></div><div class="stats-grid"><div class="stat-card"><h3 id="activeAgents">7</h3><p>Active Agents</p></div><div class="stat-card"><h3 id="tasksCompleted">0</h3><p>Tasks Completed</p></div><div class="stat-card"><h3 id="memoryEntries">0</h3><p>Memory Entries</p></div></div></div><div class="page" id="chat"><div class="page-header"><h1>Chat with Swarm</h1><p>Assign tasks to your multi-agent system</p></div><div class="chat-container"><div class="chat-messages" id="chatMessages"><div class="message assistant"><strong>SwarmForge Assistant</strong><p>Welcome! I'm your multi-agent swarm. Give me a task and I'll coordinate the best agents to complete it.</p></div></div><div class="chat-input-container"><div class="chat-input-wrapper"><textarea id="chatInput" placeholder="Enter your task here..." rows="2"></textarea><button id="sendButton" class="send-btn">Send</button></div></div></div></div><div class="page" id="agents"><div class="page-header"><h1>Agent Management</h1><p>View and manage your AI agents</p></div><div class="agents-grid" id="agentsGrid"></div></div><div class="page" id="memory"><div class="page-header"><h1>Perpetual Memory</h1><p>Browse the collective memory of your agent swarm</p></div><div id="memoryList" style="background:var(--surface);padding:2rem;border-radius:12px"><p style="text-align:center;color:var(--text-sec)">No memory entries yet</p></div></div></div><script>const API_URL='https://swarmforge-api.onrender.com';document.querySelectorAll('.nav-item').forEach(item=>{item.addEventListener('click',e=>{e.preventDefault();const page=item.dataset.page;document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));item.classList.add('active');document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(page).classList.add('active');if(page==='agents')loadAgents()})});async function checkAPI(){try{const response=await fetch(`${API_URL}/api/health`);const data=await response.json();document.getElementById('apiStatus').style.background='#10b981';document.getElementById('apiStatusText').textContent='API Online';return true}catch(error){document.getElementById('apiStatus').style.background='#ef4444';document.getElementById('apiStatusText').textContent='API Offline';return false}}const chatInput=document.getElementById('chatInput');const sendButton=document.getElementById('sendButton');const chatMessages=document.getElementById('chatMessages');sendButton.addEventListener('click',sendMessage);chatInput.addEventListener('keypress',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});async function sendMessage(){const message=chatInput.value.trim();if(!message)return;addMessage(message,'user');chatInput.value='';sendButton.disabled=true;const loadingDiv=document.createElement('div');loadingDiv.className='message assistant loading';loadingDiv.innerHTML='<p>🤖 Processing your task...</p>';chatMessages.appendChild(loadingDiv);chatMessages.scrollTop=chatMessages.scrollHeight;try{const response=await fetch(`${API_URL}/api/task`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:message})});const data=await response.json();loadingDiv.remove();addMessage(data.result||'Task completed successfully!','assistant');const current=parseInt(document.getElementById('tasksCompleted').textContent);document.getElementById('tasksCompleted').textContent=current+1}catch(error){loadingDiv.remove();addMessage('Error processing task. Please try again.','assistant')}finally{sendButton.disabled=false}}function addMessage(text,type){const messageDiv=document.createElement('div');messageDiv.className=`message ${type}`;messageDiv.innerHTML=`<strong>${type==='user'?'You':'SwarmForge'}</strong><p>${text}</p>`;chatMessages.appendChild(messageDiv);chatMessages.scrollTop=chatMessages.scrollHeight}async function loadAgents(){const grid=document.getElementById('agentsGrid');grid.innerHTML='<div class="loading">Loading agents...</div>';const agents=[{name:'TaskOrchestrator',role:'The Conductor',status:'Active',description:'Strategic task coordination'},{name:'ResearchAgent',role:'The Scholar',status:'Active',description:'Deep research and analysis'},{name:'CodeExecutor',role:'The Engineer',status:'Active',description:'Code generation and execution'},{name:'WebScraper',role:'The Hunter',status:'Active',description:'Web data extraction'},{name:'DataAnalyzer',role:'The Scientist',status:'Active',description:'Data pattern recognition'},{name:'ContentGenerator',role:'The Wordsmith',status:'Active',description:'Creative content creation'},{name:'SearchAgent',role:'The Navigator',status:'Active',description:'Information discovery'}];grid.innerHTML=agents.map(agent=>`<div class="agent-card"><h3>${agent.name}</h3><p>${agent.role}</p><p style="font-size:0.875rem;color:var(--text-sec);margin-top:0.5rem">${agent.description}</p><span class="agent-status">${agent.status}</span></div>`).join('')}checkAPI();setInterval(checkAPI,30000);</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwarmForge - Multi-Agent AI Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f1419;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: #1a1f2e;
+            border-right: 1px solid #2a2f3e;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+        
+        .sidebar h2 {
+            padding: 0 20px 20px;
+            font-size: 18px;
+            color: #6366f1;
+        }
+        
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover,
+        .nav-item.active {
+            background: #2a2f3e;
+            border-left-color: #6366f1;
+            color: #6366f1;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: #1a1f2e;
+            border-bottom: 1px solid #2a2f3e;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section {
+            flex: 1;
+            display: none;
+            padding: 25px;
+            overflow-y: auto;
+        }
+        
+        .section.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .section h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        #chat {
+            flex-direction: column;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        
+        .message.user {
+            align-self: flex-end;
+            background: #6366f1;
+            color: #fff;
+        }
+        
+        .message.assistant {
+            align-self: flex-start;
+            background: #2a2f3e;
+            color: #e0e0e0;
+        }
+        
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #taskInput {
+            flex: 1;
+            background: #2a2f3e;
+            border: 1px solid #3a3f4e;
+            color: #e0e0e0;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        #taskInput:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        
+        #sendBtn {
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        #sendBtn:hover {
+            background: #4f46e5;
+        }
+        
+        .api-status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .card {
+            background: #1a1f2e;
+            border: 1px solid #2a2f3e;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .card h3 {
+            margin-bottom: 10px;
+            color: #6366f1;
+        }
+        
+        .agents-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .agent-item {
+            background: #1a1f2e;
+            border: 1px solid #2a2f3e;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        
+        .memory-log {
+            background: #1a1f2e;
+            border: 1px solid #2a2f3e;
+            padding: 15px;
+            border-radius: 6px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-left: 2px solid #6366f1;
+            padding-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>🚀 SwarmForge</h2>
+            <div class="nav-item active" onclick="switchSection('dashboard')">📊 Dashboard</div>
+            <div class="nav-item" onclick="switchSection('chat')">💬 Chat</div>
+            <div class="nav-item" onclick="switchSection('agents')">🤖 Agents</div>
+            <div class="nav-item" onclick="switchSection('memory')">🧠 Memory</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="header">
+                <div id="headerTitle">Dashboard</div>
+                <div id="apiStatus" class="api-status">
+                    <div class="status-dot"></div>
+                    <span id="apiStatusText">API Online</span>
+                </div>
+            </div>
+            
+            <div id="dashboard" class="section active">
+                <h1>Chat with Swarm</h1>
+                <p>Assign tasks to your multi-agent system</p>
+                <div class="dashboard-grid" style="margin-top: 30px;">
+                    <div class="card">
+                        <h3>Active Agents</h3>
+                        <p id="agentCount">4</p>
+                    </div>
+                    <div class="card">
+                        <h3>Tasks Completed</h3>
+                        <p id="taskCount">0</p>
+                    </div>
+                    <div class="card">
+                        <h3>System Health</h3>
+                        <p style="color: #10b981;">Healthy</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="chat" class="section">
+                <h1>Chat with Swarm</h1>
+                <p>Assign tasks to your multi-agent system</p>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message assistant">Welcome! I'm your multi-agent swarm. Give me a task and I'll coordinate the best agents to complete it.</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="taskInput" placeholder="Enter your task here...">
+                    <button id="sendBtn" onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+            
+            <div id="agents" class="section">
+                <h1>Active Agents</h1>
+                <div class="agents-list">
+                    <div class="agent-item">
+                        <strong>🤖 Research Agent</strong>
+                        <p>Status: Online | Tasks: 12 completed</p>
+                    </div>
+                    <div class="agent-item">
+                        <strong>💼 Analysis Agent</strong>
+                        <p>Status: Online | Tasks: 8 completed</p>
+                    </div>
+                    <div class="agent-item">
+                        <strong>📝 Writing Agent</strong>
+                        <p>Status: Online | Tasks: 15 completed</p>
+                    </div>
+                    <div class="agent-item">
+                        <strong>🔧 Execution Agent</strong>
+                        <p>Status: Online | Tasks: 6 completed</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="memory" class="section">
+                <h1>System Logs</h1>
+                <div class="memory-log" id="memoryLog">
+                    <div class="log-entry">[INIT] SwarmForge initialized</div>
+                    <div class="log-entry">[INFO] All agents online</div>
+                    <div class="log-entry">[INFO] System ready</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const taskCounter = {count: 0};
+        
+        function switchSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            // Show selected section
+            document.getElementById(section).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Update header
+            const titles = {
+                dashboard: 'Dashboard',
+                chat: 'Chat with Swarm',
+                agents: 'Active Agents',
+                memory: 'System Logs'
+            };
+            document.getElementById('headerTitle').textContent = titles[section];
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('taskInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.textContent = message;
+            chatMessages.appendChild(userMsg);
+            
+            // Clear input
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Simulate agent processing
+            setTimeout(() => {
+                const assistantMsg = document.createElement('div');
+                assistantMsg.className = 'message assistant';
+                assistantMsg.textContent = generateResponse(message);
+                chatMessages.appendChild(assistantMsg);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Update task counter
+                taskCounter.count++;
+                document.getElementById('taskCount').textContent = taskCounter.count;
+                
+                // Add log entry
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.textContent = `[TASK] Task #${taskCounter.count} completed: "${message}"`;
+                document.getElementById('memoryLog').appendChild(logEntry);
+            }, 500);
+        }
+        
+        function generateResponse(message) {
+            const responses = [
+                'Processing your request through the multi-agent system...',
+                'Coordinating agents to handle: "' + message + '"',
+                'Task assigned to optimal agent cluster.',
+                'Research agent analyzing request...',
+                'Delegation complete. Agents working on your task.',
+                'Analysis complete. Here are the results...',
+                'All agents report task completion.',
+                'Swarm consensus reached on solution.'
+            ];
+            
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+        
+        // Allow sending message with Enter key
+        document.getElementById('taskInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
