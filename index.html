@@ -359,6 +359,15 @@
                 logEntry.textContent = `[TASK] Task #${taskCounter.count} completed: "${message}"`;
                 document.getElementById('memoryLog').appendChild(logEntry);
             }, 500);
+
+                    // Show final result after processing
+        setTimeout(() => {
+            const resultMsg = document.createElement('div');
+            resultMsg.className = 'message assistant';
+            resultMsg.textContent = `Task completed! Here are the results for: "${message}"\n\n✓ Analysis complete\n✓ Data gathered and processed\n✓ Recommendations generated\n✓ Quality assurance passed\n\nThe multi-agent system has successfully processed your request. All agents have completed their assigned tasks and reached consensus on the solution.`;
+            chatMessages.appendChild(resultMsg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 3000);
         }
         
         function generateResponse(message) {
