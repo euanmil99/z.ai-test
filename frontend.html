@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwarmForge - Multi-Agent Swarm Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        .dashboard {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .api-section {
+            margin-bottom: 30px;
+        }
+        .api-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .endpoint-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        .endpoint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .endpoint-url {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #764ba2;
+        }
+        .test-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .test-button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .test-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .response-box {
+            background: #2d2d2d;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            display: none;
+        }
+        .response-box.show {
+            display: block;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        .status-online {
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+        .status-offline {
+            background: #ff0000;
+            box-shadow: 0 0 10px #ff0000;
+        }
+        .status-testing {
+            background: #ffff00;
+            box-shadow: 0 0 10px #ffff00;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 SwarmForge</h1>
+            <p class="subtitle">Autonomous Multi-Agent Swarm Interface | ZAI-Powered</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="api-section">
+                <h2>API Endpoints Testing</h2>
+                
+                <div class="endpoint-card">
+                    <div class="endpoint-header">
+                        <div>
+                            <span class="endpoint-url">GET /</span>
+                            <span class="status-indicator status-offline" id="status-root"></span>
+                        </div>
+                        <button class="test-button" onclick="testEndpoint('root')">Test Endpoint</button>
+                    </div>
+                    <p>Main API status endpoint</p>
+                    <div class="response-box" id="response-root"></div>
+                </div>
+
+                <div class="endpoint-card">
+                    <div class="endpoint-header">
+                        <div>
+                            <span class="endpoint-url">GET /api/health</span>
+                            <span class="status-indicator status-offline" id="status-health"></span>
+                        </div>
+                        <button class="test-button" onclick="testEndpoint('health')">Test Endpoint</button>
+                    </div>
+                    <p>Health check endpoint</p>
+                    <div class="response-box" id="response-health"></div>
+                </div>
+            </div>
+
+            <div class="api-section">
+                <h2>Test Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-tests">0</div>
+                        <div class="stat-label">Total Tests</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="successful-tests">0</div>
+                        <div class="stat-label">Successful</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="failed-tests">0</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avg-response">0ms</div>
+                        <div class="stat-label">Avg Response Time</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-section">
+                <button class="test-button" onclick="testAllEndpoints()" style="width: 100%; padding: 15px; font-size: 16px;">Test All Endpoints</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://swarmforge-api.onrender.com';
+        let stats = {
+            totalTests: 0,
+            successfulTests: 0,
+            failedTests: 0,
+            responseTimes: []
+        };
+
+        const endpoints = {
+            root: '/',
+            health: '/api/health'
+        };
+
+        async function testEndpoint(name) {
+            const url = API_BASE_URL + endpoints[name];
+            const responseBox = document.getElementById(`response-${name}`);
+            const statusIndicator = document.getElementById(`status-${name}`);
+            const button = event.target;
+            
+            button.disabled = true;
+            button.textContent = 'Testing...';
+            statusIndicator.className = 'status-indicator status-testing';
+            responseBox.textContent = 'Testing endpoint...';
+            responseBox.classList.add('show');
+            
+            const startTime = Date.now();
+            
+            try {
+                const response = await fetch(url);
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                const data = await response.json();
+                
+                stats.totalTests++;
+                stats.successfulTests++;
+                stats.responseTimes.push(responseTime);
+                
+                statusIndicator.className = 'status-indicator status-online';
+                responseBox.textContent = `Status: ${response.status} ${response.statusText}\nResponse Time: ${responseTime}ms\n\n${JSON.stringify(data, null, 2)}`;
+                button.textContent = '✓ Test Passed';
+                button.style.background = '#10b981';
+                
+                setTimeout(() => {
+                    button.textContent = 'Test Endpoint';
+                    button.style.background = '';
+                    button.disabled = false;
+                }, 2000);
+            } catch (error) {
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                stats.totalTests++;
+                stats.failedTests++;
+                stats.responseTimes.push(responseTime);
+                
+                statusIndicator.className = 'status-indicator status-offline';
+                responseBox.textContent = `Error: ${error.message}\nResponse Time: ${responseTime}ms`;
+                responseBox.style.color = '#ff0000';
+                button.textContent = '✗ Test Failed';
+                button.style.background = '#ef4444';
+                
+                setTimeout(() => {
+                    button.textContent = 'Test Endpoint';
+                    button.style.background = '';
+                    button.disabled = false;
+                    responseBox.style.color = '#0f0';
+                }, 2000);
+            }
+            
+            updateStats();
+        }
+
+        async function testAllEndpoints() {
+            for (const name of Object.keys(endpoints)) {
+                await testEndpoint(name);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('total-tests').textContent = stats.totalTests;
+            document.getElementById('successful-tests').textContent = stats.successfulTests;
+            document.getElementById('failed-tests').textContent = stats.failedTests;
+            
+            if (stats.responseTimes.length > 0) {
+                const avgTime = stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length;
+                document.getElementById('avg-response').textContent = Math.round(avgTime) + 'ms';
+            }
+        }
+
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testAllEndpoints();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
